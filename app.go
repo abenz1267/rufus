@@ -3,6 +3,8 @@ package rufus
 import (
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"golang.org/x/text/language"
@@ -14,6 +16,7 @@ type App struct {
 	Router      `json:"router,omitempty"`
 	Translation `json:"-"`
 	Templates   `json:"templates,omitempty"`
+	Response    `json:"-"`
 	Language    string `json:"language,omitempty"`
 	CSPPolicy   string `json:"csp_policy,omitempty"`
 }
@@ -63,7 +66,7 @@ func (a *App) addLanguageMatcher() {
 
 // Start checks the environment set (development or production) and starts an according server
 func (a *App) Start() error {
-	a.Router.RegisterRoutes(a.Translation.Languages)
+	a.Router.RegisterRoutes(a.Translation.Languages, a.Server, a.CSPPolicy)
 
 	if err := a.Templates.CacheFiles(a.Translation); err != nil {
 		return err
@@ -74,4 +77,22 @@ func (a *App) Start() error {
 	}
 
 	return a.Server.startProduction(a.Router.Mux)
+}
+
+// Render handles and generates the reponse
+func (a *App) Render(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Accept") == "application/json" {
+		a.Response.renderJSON(w, r)
+		return
+	}
+
+	if a.Response.Status != http.StatusOK {
+		a.Response.TemplateFile = "error"
+	}
+
+	var altName strings.Builder
+	altName.WriteString(a.Response.TemplateFile)
+	altName.WriteString("_raw")
+
+	a.Response.renderHTML(w, r, a.Templates.live[a.Response.TemplateFile], a.Templates.liveStripped[altName.String()])
 }

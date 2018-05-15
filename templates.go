@@ -19,7 +19,7 @@ type Templates struct {
 }
 
 // CacheFiles processes templates and saves them to the according map
-func (t Templates) CacheFiles(translation Translation) error {
+func (t *Templates) CacheFiles(translation Translation) error {
 	funcs := template.FuncMap{}
 	funcs["translate"] = translation.Translate
 	funcs["translateURL"] = translation.TranslateURL
@@ -42,16 +42,23 @@ func (t Templates) CacheFiles(translation Translation) error {
 		templateFile := filepath.Join(t.TemplateFolder, filename)
 
 		if filename != t.BaseTemplate {
-			newTemplate, err := template.New(t.BaseTemplate).Funcs(funcs).ParseFiles(baseTemplate, templateFile)
-			if err != nil {
-				return err
-			}
 
-			switch strings.Contains(filename, "_raw") {
+			filenameNoHTML := strings.TrimSuffix(filename, ".html")
+
+			switch strings.Contains(filenameNoHTML, "_raw") {
 			case true:
-				strippedLiveMap[filename] = newTemplate
+				newTemplate, err := template.New(filename).Funcs(funcs).ParseFiles(templateFile)
+				if err != nil {
+					return err
+				}
+				strippedLiveMap[filenameNoHTML] = newTemplate
 			default:
-				liveMap[filename] = newTemplate
+				newTemplate, err := template.New(t.BaseTemplate).Funcs(funcs).ParseFiles(baseTemplate, templateFile)
+				if err != nil {
+					return err
+				}
+
+				liveMap[filenameNoHTML] = newTemplate
 			}
 		}
 	}

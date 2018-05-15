@@ -5,14 +5,11 @@
     "production_port": "80",
     "development_host": "localhost:3000"
   },
-  "middleware": {
-    "ab_testing": {
-      "active": false,
-      "folder": "/public/templates_test",
-      "level": 2
-    },
-    "response_cache": false,
-    "www_redirect": true
+  "router": {
+    "middleware": {
+      "redirect_to_non_www": true,
+      "enable_response_cache": true
+    }
   },
   "templates": {
     "template_folder": "./public/templates",
