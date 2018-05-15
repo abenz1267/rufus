@@ -72,6 +72,8 @@ func (a *App) Start() error {
 		return err
 	}
 
+	go a.Server.startFileServer(a.Router.Mux, a.Server.StaticURL, http.Dir(a.Server.StaticFolder))
+
 	if a.Server.Dev {
 		return a.Server.startDevelopment(a.Router.Mux)
 	}

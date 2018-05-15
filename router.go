@@ -1,7 +1,6 @@
 package rufus
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -24,8 +23,6 @@ type Router struct {
 func (r *Router) RegisterRoutes(languages map[string]int, server server, csp string) {
 	r.RoutesSender = make(chan string)
 	r.RoutesReceiver = make(chan http.Handler)
-
-	r.prependMiddleware(server, csp)
 
 	if languages != nil {
 		r.Mux.Get("/", r.getBrowserLanguagePreferenceAndRedirect)
@@ -58,17 +55,18 @@ func (r *Router) getRoutes(language string) http.Handler {
 	return <-r.RoutesReceiver
 }
 
-func (r *Router) prependMiddleware(server server, csp string) {
+// PrependMiddleware is used to add basic middleware to routers
+func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
 	host := server.ProductionHost
 
-	r.Mux.Use(middleware.Compress(5, "application/octet-stream", "application/javascript", "application/json", "text/html", "text/css", "text/plain", "text/javascript", "image/svg+xml", "image/jpeg", "image/png", "image/x-icon"))
+	router.Use(middleware.Compress(5, "application/octet-stream", "application/javascript", "application/json", "text/html", "text/css", "text/plain", "text/javascript", "image/svg+xml", "image/jpeg", "image/png", "image/x-icon"))
 
 	if server.Dev {
 		host = server.DevelopmentHost
 	} else {
-		r.Mux.Use(middleware.RequestID)
-		r.Mux.Use(middleware.RealIP)
-		r.Mux.Use(middleware.Recoverer)
+		router.Use(middleware.RequestID)
+		router.Use(middleware.RealIP)
+		router.Use(middleware.Recoverer)
 	}
 
 	secureMiddleware := secure.New(secure.Options{
@@ -87,18 +85,15 @@ func (r *Router) prependMiddleware(server server, csp string) {
 		ContentSecurityPolicy: csp,
 	})
 
-	r.Mux.Use(secureMiddleware.Handler)
+	router.Use(secureMiddleware.Handler)
 
-	log.Println("Setting content type based on 'Accept' Header from request")
-	r.Mux.Use(r.Middleware.setContentType())
+	router.Use(r.Middleware.setContentType())
 
 	if r.Middleware.RedirectToNonWWW {
-		log.Println("Redirecting to non-www")
-		r.Mux.Use(r.Middleware.redirectWithoutWWW())
+		router.Use(r.Middleware.redirectWithoutWWW())
 	}
 
 	if r.Middleware.EnableResponseCache {
-		log.Println("Using response cache")
-		r.Mux.Use(r.Middleware.Cache.Check())
+		router.Use(r.Middleware.Cache.Check())
 	}
 }

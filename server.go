@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/go-chi/chi"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -16,6 +18,8 @@ type server struct {
 	ProductionHost  string `json:"production_host,omitempty"`
 	ProductionPort  string `json:"production_port,omitempty"`
 	DevelopmentHost string `json:"development_host,omitempty"`
+	StaticURL       string `json:"static_url,omitempty"`
+	StaticFolder    string `json:"static_folder,omitempty"`
 }
 
 func (s server) startDevelopment(r http.Handler) error {
@@ -68,4 +72,33 @@ func (s server) startProduction(r http.Handler) error {
 	}
 
 	return nil
+}
+
+func (s server) startFileServer(r chi.Router, path string, root http.FileSystem) {
+	var cacheHeaders = map[string]string{
+		"Vary":          "Accept-Encoding",
+		"date":          time.Now().Format(http.TimeFormat),
+		"Expires":       time.Now().AddDate(1, 0, 0).Format(http.TimeFormat),
+		"Cache-Control": "public, max-age=31536000",
+	}
+
+	if strings.ContainsAny(path, "{}*") {
+		panic("FileServer does not permit URL parameters.")
+	}
+
+	fs := http.StripPrefix(path, http.FileServer(root))
+
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for k, v := range cacheHeaders {
+			w.Header().Set(k, v)
+		}
+
+		fs.ServeHTTP(w, r)
+	}))
 }

@@ -3,12 +3,14 @@
     "dev": true,
     "production_host": "andrejbenz.com",
     "production_port": "80",
-    "development_host": "localhost:3000"
+    "development_host": "localhost:3000",
+    "static_url": "/public",
+    "static_folder": "./public/static"
   },
   "router": {
     "middleware": {
       "redirect_to_non_www": true,
-      "enable_response_cache": true
+      "enable_response_cache": false
     }
   },
   "templates": {
