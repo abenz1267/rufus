@@ -1,0 +1,24 @@
+{
+  "server": {
+    "dev": true,
+    "production_host": "andrejbenz.com",
+    "production_port": "80",
+    "development_host": "localhost:3000"
+  },
+  "middleware": {
+    "ab_testing": {
+      "active": false,
+      "folder": "/public/templates_test",
+      "level": 2
+    },
+    "response_cache": false,
+    "www_redirect": true
+  },
+  "templates": {
+    "template_folder": "./public/templates",
+    "base_template": "base.html"
+  },
+  "language": "de",
+  "csp_policy":
+    "default-src https://www.google-analytics.com https://www.google.com 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src https://www.google.com https://www.gstatic.com www.google-analytics.com 'unsafe-eval' 'self'"
+}

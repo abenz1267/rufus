@@ -1,0 +1,73 @@
+package rufus
+
+import (
+	"html/template"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+// Templates holds cached template files
+type Templates struct {
+	TemplateFolder string `json:"template_folder,omitempty"`
+	BaseTemplate   string `json:"base_template,omitempty"`
+	live           map[string]*template.Template
+	liveStripped   map[string]*template.Template
+	test           map[string]*template.Template
+	testStripped   map[string]*template.Template
+}
+
+// CacheFiles processes templates and saves them to the according map
+func (t Templates) CacheFiles(translation Translation) error {
+	funcs := template.FuncMap{}
+	funcs["translate"] = translation.Translate
+	funcs["translateURL"] = translation.TranslateURL
+	funcs["safeHTML"] = func(s string) template.HTML {
+		return template.HTML(s)
+	}
+
+	liveMap := make(map[string]*template.Template)
+	strippedLiveMap := make(map[string]*template.Template)
+
+	liveTemplateFiles, err := t.GetFiles(t.TemplateFolder)
+	if err != nil {
+		return err
+	}
+
+	baseTemplate := filepath.Join(t.TemplateFolder, t.BaseTemplate)
+
+	for _, file := range liveTemplateFiles {
+		filename := file.Name()
+		templateFile := filepath.Join(t.TemplateFolder, filename)
+
+		if filename != t.BaseTemplate {
+			newTemplate, err := template.New(t.BaseTemplate).Funcs(funcs).ParseFiles(baseTemplate, templateFile)
+			if err != nil {
+				return err
+			}
+
+			switch strings.Contains(filename, "_raw") {
+			case true:
+				strippedLiveMap[filename] = newTemplate
+			default:
+				liveMap[filename] = newTemplate
+			}
+		}
+	}
+
+	t.live = liveMap
+	t.liveStripped = strippedLiveMap
+
+	return nil
+}
+
+// GetFiles returns file data for files in given folder
+func (t Templates) GetFiles(folder string) ([]os.FileInfo, error) {
+	files, err := ioutil.ReadDir(folder)
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
