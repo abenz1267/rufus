@@ -1,6 +1,7 @@
 package rufus
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -56,7 +57,11 @@ func (r *Router) getRoutes(language string) http.Handler {
 }
 
 func (r *Router) prependMiddleware() {
+	log.Println("Setting content type based on 'Accept' Header from request")
+	r.Mux.Use(r.Middleware.setContentType())
+
 	if r.Middleware.RedirectToNonWWW {
+		log.Println("Redirecting to non-www")
 		r.Mux.Use(r.Middleware.redirectWithoutWWW())
 	}
 }
