@@ -27,8 +27,35 @@ type Router struct {
 func (r *Router) RegisterRoutes(languages map[string]int, server server, csp string) {
 	r.RoutesSender = make(chan string)
 	r.RoutesReceiver = make(chan http.Handler)
+	host := server.ProductionHost
 
 	r.Mux.Use(middleware.Compress(5, "application/octet-stream", "application/javascript", "application/json", "text/html", "text/css", "text/plain", "text/javascript", "image/svg+xml", "image/jpeg", "image/png", "image/x-icon"))
+
+	if server.Dev {
+		host = server.DevelopmentHost
+	} else {
+		r.Mux.Use(middleware.RequestID)
+		r.Mux.Use(middleware.RealIP)
+		r.Mux.Use(middleware.Recoverer)
+	}
+
+	secureMiddleware := secure.New(secure.Options{
+		AllowedHosts:          []string{host, "www." + host},
+		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
+		SSLRedirect:           true,
+		SSLHost:               host,
+		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+		STSSeconds:            315360000,
+		STSIncludeSubdomains:  true,
+		STSPreload:            true,
+		FrameDeny:             true,
+		ContentTypeNosniff:    true,
+		BrowserXssFilter:      true,
+		ReferrerPolicy:        "no-referrer",
+		ContentSecurityPolicy: csp,
+	})
+
+	r.Mux.Use(secureMiddleware.Handler)
 
 	if languages != nil {
 		r.Mux.Get("/", r.getBrowserLanguagePreferenceAndRedirect)
@@ -62,8 +89,6 @@ func (r *Router) getRoutes(language string) http.Handler {
 
 // PrependMiddleware is used to add basic middleware to routers
 func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
-	host := server.ProductionHost
-
 	//zerolog config
 	zerolog.DurationFieldUnit = time.Microsecond
 	zerolog.TimeFieldFormat = time.RFC822
@@ -75,32 +100,6 @@ func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
 	router.Use(hlog.NewHandler(logger))
 	router.Use(hlog.RemoteAddrHandler("ip"))
 	router.Use(r.Middleware.logRequests())
-
-	if server.Dev {
-		host = server.DevelopmentHost
-	} else {
-		router.Use(middleware.RequestID)
-		router.Use(middleware.RealIP)
-		router.Use(middleware.Recoverer)
-	}
-
-	secureMiddleware := secure.New(secure.Options{
-		AllowedHosts:          []string{host, "www." + host},
-		HostsProxyHeaders:     []string{"X-Forwarded-Host"},
-		SSLRedirect:           true,
-		SSLHost:               host,
-		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
-		STSSeconds:            315360000,
-		STSIncludeSubdomains:  true,
-		STSPreload:            true,
-		FrameDeny:             true,
-		ContentTypeNosniff:    true,
-		BrowserXssFilter:      true,
-		ReferrerPolicy:        "no-referrer",
-		ContentSecurityPolicy: csp,
-	})
-
-	router.Use(secureMiddleware.Handler)
 
 	if r.Middleware.RedirectToNonWWW {
 		router.Use(r.Middleware.redirectWithoutWWW())
