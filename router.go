@@ -50,7 +50,6 @@ func (r *Router) getBrowserLanguagePreferenceAndRedirect(w http.ResponseWriter, 
 	b.WriteString(req.Host)
 	b.WriteString("/")
 	b.WriteString(lang.String())
-	b.WriteString(req.RequestURI)
 
 	http.Redirect(w, req, b.String(), http.StatusMovedPermanently)
 }
