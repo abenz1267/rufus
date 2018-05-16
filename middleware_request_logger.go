@@ -21,6 +21,8 @@ func (m *Middleware) logRequests() func(next http.Handler) http.Handler {
 				Dur("in", time.Since(now)).
 				Msg("")
 
+			w.Header().Set("Content-Type", nw.Header().Get("Content-Type"))
+
 			w.Write(nw.Body.Bytes())
 		})
 	}

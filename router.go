@@ -6,11 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 	"github.com/unrolled/secure"
 	"golang.org/x/text/language"
 )
@@ -102,8 +101,6 @@ func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
 	})
 
 	router.Use(secureMiddleware.Handler)
-
-	router.Use(r.Middleware.setContentType())
 
 	if r.Middleware.RedirectToNonWWW {
 		router.Use(r.Middleware.redirectWithoutWWW())

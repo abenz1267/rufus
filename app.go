@@ -84,6 +84,7 @@ func (a *App) Start() error {
 // Render handles and generates the reponse
 func (a *App) Render(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Accept") == "application/json" {
+		w.Header().Add("Content-Type", "application/json")
 		a.Response.renderJSON(w, r)
 		return
 	}
@@ -96,5 +97,6 @@ func (a *App) Render(w http.ResponseWriter, r *http.Request) {
 	altName.WriteString(a.Response.TemplateFile)
 	altName.WriteString("_raw")
 
+	w.Header().Add("Content-Type", "text/html")
 	a.Response.renderHTML(w, r, a.Templates.live[a.Response.TemplateFile], a.Templates.liveStripped[altName.String()])
 }
