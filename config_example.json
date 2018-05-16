@@ -2,7 +2,7 @@
   "server": {
     "dev": true,
     "production_host": "andrejbenz.com",
-    "production_port": "80",
+    "production_port": "443",
     "development_host": "localhost:3000",
     "static_url": "/public",
     "static_folder": "./public/static"
