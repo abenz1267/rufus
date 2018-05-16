@@ -2,7 +2,12 @@ package rufus
 
 import (
 	"net/http"
+	"os"
 	"strings"
+	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -58,6 +63,18 @@ func (r *Router) getRoutes(language string) http.Handler {
 // PrependMiddleware is used to add basic middleware to routers
 func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
 	host := server.ProductionHost
+
+	//zerolog config
+	zerolog.DurationFieldUnit = time.Microsecond
+	zerolog.TimeFieldFormat = time.RFC822
+
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Logger()
+
+	router.Use(hlog.NewHandler(logger))
+	router.Use(hlog.RemoteAddrHandler("ip"))
+	router.Use(r.Middleware.logRequests())
 
 	router.Use(middleware.Compress(5, "application/octet-stream", "application/javascript", "application/json", "text/html", "text/css", "text/plain", "text/javascript", "image/svg+xml", "image/jpeg", "image/png", "image/x-icon"))
 
