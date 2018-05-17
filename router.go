@@ -29,6 +29,10 @@ func (r *Router) RegisterRoutes(languages map[string]int, server server, csp str
 	r.RoutesReceiver = make(chan http.Handler)
 	host := server.ProductionHost
 
+	if r.Middleware.RedirectToNonWWW {
+		r.Mux.Use(r.Middleware.redirectWithoutWWW())
+	}
+
 	r.Mux.Use(middleware.Compress(5, "application/octet-stream", "application/javascript", "application/json", "text/html", "text/css", "text/plain", "text/javascript", "image/svg+xml", "image/jpeg", "image/png", "image/x-icon"))
 
 	if server.Dev {
@@ -100,10 +104,6 @@ func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
 	router.Use(hlog.NewHandler(logger))
 	router.Use(hlog.RemoteAddrHandler("ip"))
 	router.Use(r.Middleware.logRequests())
-
-	if r.Middleware.RedirectToNonWWW {
-		router.Use(r.Middleware.redirectWithoutWWW())
-	}
 
 	if r.Middleware.EnableResponseCache {
 		router.Use(r.Middleware.Cache.Check())
