@@ -58,6 +58,12 @@ cache := &rufus.Cache{}
 app.Middleware.Cache = cache
 ```
 
+To invalidate the cache for a given URL
+
+```
+deleted := app.Cache.Invalidate(URL)
+```
+
 ### Registering routes
 
 ```
