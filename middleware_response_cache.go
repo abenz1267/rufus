@@ -31,6 +31,26 @@ func (c *Cache) Check() func(next http.Handler) http.Handler {
 	}
 }
 
+// Invalidate is used to delete a cache entry
+func (c *Cache) Invalidate(path string) bool {
+	if _, ok := c.liveCache.Load(path); ok {
+		c.liveCache.Delete(path)
+		return true
+	}
+
+	if _, ok := c.strippedCache.Load(path); ok {
+		c.strippedCache.Delete(path)
+		return true
+	}
+
+	if _, ok := c.jsonCache.Load(path); ok {
+		c.jsonCache.Delete(path)
+		return true
+	}
+
+	return false
+}
+
 func (c *Cache) checkCache(cacheMap *sync.Map, w http.ResponseWriter, r *http.Request, next http.Handler) {
 	if val, ok := cacheMap.Load(r.RequestURI); ok {
 		w.Write(val.([]byte))
