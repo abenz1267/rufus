@@ -81,7 +81,7 @@ func (a *App) Start() error {
 	return a.Server.startProduction(a.Router.Mux)
 }
 
-// Render handles and generates the reponse
+// Render handles and generates the response
 func (a *App) Render(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Accept") == "application/json" {
 		w.Header().Add("Content-Type", "application/json")

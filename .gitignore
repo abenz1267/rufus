@@ -1,4 +1,5 @@
 config.json
-translation.json
 debug.test
 .dist
+translation.json
+.vscode

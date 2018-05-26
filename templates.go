@@ -1,9 +1,9 @@
 package rufus
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -30,8 +30,9 @@ func (t *Templates) CacheFiles(translation Translation) error {
 	liveMap := make(map[string]*template.Template)
 	strippedLiveMap := make(map[string]*template.Template)
 
-	liveTemplateFiles, err := t.GetFiles(t.TemplateFolder)
+	liveTemplateFiles, err := ioutil.ReadDir(t.TemplateFolder)
 	if err != nil {
+		fmt.Println(t.TemplateFolder)
 		return err
 	}
 
@@ -67,14 +68,4 @@ func (t *Templates) CacheFiles(translation Translation) error {
 	t.liveStripped = strippedLiveMap
 
 	return nil
-}
-
-// GetFiles returns file data for files in given folder
-func (t Templates) GetFiles(folder string) ([]os.FileInfo, error) {
-	files, err := ioutil.ReadDir(folder)
-	if err != nil {
-		return nil, err
-	}
-
-	return files, nil
 }

@@ -1,18 +1,22 @@
 {
   "Languages": {
     "en": 0,
-    "de": 1
+    "de": 1,
+    "es": 2,
+    "fr": 3,
+    "it": 4
   },
   "Locales": {
     "en": "en-US",
-    "de": "de-DE"
+    "de": "de-DE",
+    "es": "es-ES",
+    "fr": "fr-FR",
+    "it": "it-IT"
   },
   "Phrases": {
-    "English": ["Deutsche Version", "English Version"],
-    "Menu": ["Menu", "Menü"]
+    "English": ["English", "Englisch", "Inglés", "Anglais", "Inglese"]
   },
   "URL": {
-    "about": ["about", "ueber_mich"],
-    "en": ["de", "en"]
+    "about": ["about", "ueber_mich", "sobre mi", "de_moi", "di_me"]
   }
 }
