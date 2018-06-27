@@ -2,6 +2,7 @@ package rufus
 
 import (
 	"encoding/json"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -98,5 +99,16 @@ func (a *App) Render(w http.ResponseWriter, r *http.Request) {
 	altName.WriteString("_raw")
 
 	w.Header().Add("Content-Type", "text/html")
-	a.Response.renderHTML(w, r, a.Templates.live[a.Response.TemplateFile], a.Templates.liveStripped[altName.String()])
+	if !a.Server.Dev {
+		a.Response.renderHTML(w, r, a.Templates.live[a.Response.TemplateFile], a.Templates.liveStripped[altName.String()])
+	} else {
+		funcs := template.FuncMap{}
+		funcs["translate"] = a.Translation.Translate
+		funcs["translateURL"] = a.Translation.TranslateURL
+		funcs["safeHTML"] = func(s string) template.HTML {
+			return template.HTML(s)
+		}
+
+		a.Response.renderHTMLDev(w, r, funcs, a.TemplateFolder, a.BaseTemplate)
+	}
 }

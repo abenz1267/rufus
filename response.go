@@ -17,7 +17,7 @@ type Response struct {
 func (resp Response) renderHTML(w http.ResponseWriter, r *http.Request, template, strippedTemplate *template.Template) {
 	if r.Header.Get("Accept") == "text/html-raw" {
 		if err := strippedTemplate.Execute(w, resp.Data); err != nil {
-			log.Println(err)
+			log.Printf("Error in response.renderHTML: %e", err)
 			http.Error(w, "Sorry, something went wrong.", http.StatusInternalServerError)
 			return
 		}
@@ -28,6 +28,38 @@ func (resp Response) renderHTML(w http.ResponseWriter, r *http.Request, template
 		log.Println(err)
 		http.Error(w, "Sorry, something went wrong.", http.StatusInternalServerError)
 	}
+}
+
+func (resp Response) renderHTMLDev(w http.ResponseWriter, r *http.Request, funcs template.FuncMap, templateFolder, baseTemplate string) {
+
+	if r.Header.Get("Accept") == "text/html-raw" {
+		tmpl, err := template.New(baseTemplate).Funcs(funcs).ParseFiles(templateFolder+"/"+baseTemplate, templateFolder+"/"+resp.TemplateFile+"_raw.html")
+		if err != nil {
+			resp.printTemplateError("renderHTMLDev", err, w)
+		}
+
+		err = tmpl.ExecuteTemplate(w, baseTemplate, resp.Data)
+		if err != nil {
+			resp.printTemplateError("renderHTMLDev", err, w)
+		}
+		return
+	}
+
+	tmpl, err := template.New(baseTemplate).Funcs(funcs).ParseFiles(templateFolder+"/"+baseTemplate, templateFolder+"/"+resp.TemplateFile+".html")
+	if err != nil {
+		resp.printTemplateError("renderHTMLDev", err, w)
+	}
+
+	err = tmpl.ExecuteTemplate(w, baseTemplate, resp.Data)
+	if err != nil {
+		resp.printTemplateError("renderHTMLDev", err, w)
+	}
+}
+
+func (resp Response) printTemplateError(where string, err error, w http.ResponseWriter) {
+	log.Printf("%s: %g", where, err)
+	http.Error(w, "Sorry, something went wrong.", http.StatusInternalServerError)
+	return
 }
 
 func (resp Response) renderJSON(w http.ResponseWriter, r *http.Request) {

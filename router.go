@@ -92,7 +92,7 @@ func (r *Router) getRoutes(language string) http.Handler {
 }
 
 // PrependMiddleware is used to add basic middleware to routers
-func (r *Router) PrependMiddleware(router *chi.Mux, server server, csp string) {
+func (r *Router) PrependMiddleware(router *chi.Mux) {
 	//zerolog config
 	zerolog.DurationFieldUnit = time.Microsecond
 	zerolog.TimeFieldFormat = time.RFC822
